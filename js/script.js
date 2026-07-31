@@ -278,7 +278,18 @@ $(function () {
         $("#hourlyList").html(rows).find(".hour-detail").hide();
         // .find(".hourly-row").hide();
     }
-    // function cityRowHTML(name,)
+    function cityRowHTML(name, lat, long, weatherCode, temp) {
+        const info = getWeatherInfo(weatherCode);
+
+        return `<button type="button" class="city-row">
+                    <span class="city-row-name">서울</span>
+                    <span class="city-row-weather">
+                        <img src="./icons/rain.svg" alt="" class="city-row-icon">
+                        <span class="city-row-temp">28°</span>
+                        <span class="city-row-chevron">›</span>
+                    </span>
+                </button>`
+    }
     // ----------------------------------------
     // 데이터 로딩 완료
     //  - 상태 메세지 숨기기
