@@ -1,0 +1,639 @@
+/* ---------------------------------------------------------------- */
+/* CSS 변수 */
+/* ---------------------------------------------------------------- */
+:root {
+      --color-white:   #ffffff;
+      --color-ink:     #26313c;
+      --color-ink-sub: rgba(38, 49, 60, 0.75);
+      /* 포인트색: 행동 유도(검색 버튼)와 정보 강조(강수확률)에만 사용.
+         흰 배경 대비 5.2:1 확보 */
+      --color-accent:  #2e6cc4;
+      --card-bg:       rgba(255, 255, 255, 0.94);
+      --home-bg:       #eef1f5;
+      /* 글자 크기 5단계 — 숫자 대신 단계 이름으로 관리 */
+      --fs-xs:   0.8rem;    /* 작은 라벨 (체감/습도 라벨, 배지, 푸터) */
+      --fs-sm:   0.85rem;   /* 보조 텍스트 (상태 문구, 일출일몰) */
+      --fs-md:   0.9rem;    /* 행 라벨·버튼 (시간, 요일, 탭) */
+      --fs-base: 1rem;      /* 본문 (도시명, 섹션 제목, 입력창) */
+      --fs-lg:   1.15rem;   /* 강조 숫자 (기온, 도시 온도) */
+      /* 화면이 커지면 미디어쿼리에서 재정의되는 컴포넌트 크기 */
+      --fs-hero: 2.2rem;
+      --fs-temp: 3.4rem;
+      /* 여백 8단계 (4pt 그리드) */
+      --sp-xs: 4px;
+      --sp-sm: 8px;
+      --sp-md: 12px;
+      --sp-lg: 16px;
+      --sp-xl: 20px;
+      --sp-2xl: 24px;
+      --sp-3xl: 32px;
+      --sp-4xl: 48px;
+      --radius-lg:     24px;
+      --radius-md:     16px;
+      --bg-start:      #6fb1fc;
+      --bg-end:        #4d6ef7;
+    }
+
+
+
+/* --------------------------------
+   날씨 카테고리별 배경 그라디언트
+   - JS 가 body 에 data-weather="sunny|cloudy|foggy|rainy|snowy|thunder" 를 설정하면
+     아래 선택자가 --bg-start / --bg-end 값을 바꿔줌 (Day 3 에서 동작)
+-------------------------------- */
+body[data-weather="sunny"]   { --bg-start: #6fb1fc; --bg-end: #4d6ef7; }
+body[data-weather="cloudy"]  { --bg-start: #93a5b8; --bg-end: #5c6f83; }
+body[data-weather="foggy"]   { --bg-start: #b9c6d1; --bg-end: #8592a1; }
+body[data-weather="rainy"]   { --bg-start: #4b6584; --bg-end: #24344a; }
+body[data-weather="snowy"]   { --bg-start: #8fb8d9; --bg-end: #5c86ab; }
+body[data-weather="thunder"] { --bg-start: #3c3b56; --bg-end: #18172a; }
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  color: var(--color-ink);
+  min-height: 100vh;
+  background: linear-gradient(160deg, var(--bg-start), var(--bg-end));
+  transition: background 0.6s ease;
+}
+
+:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.weather-icon,
+.city-row-icon,
+.forecast-icon,
+.hour-icon {
+    background: linear-gradient(
+                    160deg, 
+                    rgba(111,177,252,0.3), 
+                    rgba(77, 110, 247, 0.16)
+                    );
+    border-radius: 50%;
+}
+
+/* ----------------------------------------- */
+/* 홈 히어로 */
+/*   - 하늘 사진 또는 배경색 */
+/*   - 도시 검색 */
+/* ----------------------------------------- */
+.hero-photo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 320px;
+    padding: var(--sp-3xl) var(--sp-xl);
+
+    /* [선택]배경 이미지 추가 */
+    background: linear-gradient(
+                rgba(10, 14, 20, 0.45), 
+                rgba(10, 14, 20, 0.15)
+                );
+}
+.hero-inner {
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    color: var(--color-white);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+.hero-title {
+    font-size: var(--fs-hero);
+    font-weight: 900;
+    line-height: 1.25;
+}
+
+.search-form {
+    display: flex;
+    gap: var(--sp-sm);
+    margin-top: var(--sp-xl);
+}
+
+.search-form input {
+    flex: 1;
+    padding: var(--sp-lg) var(--sp-xl);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: var(--fs-base);
+    background-color: rgba(255, 255, 255, 0.9);
+    color: var(--color-ink);
+}
+.search-form input::placeholder {
+    color: var(--color-ink-sub);
+}
+
+.search-form button {
+    padding: var(--sp-lg) var(--sp-xl);
+    border: none;
+    border-radius: var(--radius-md);
+    background-color: var(--color-accent);
+    color: var(--color-white);
+    font-family: inherit;
+    font-weight: 500;
+    font-size: var(--fs-base);
+    cursor: pointer;
+    transition: opacity 200ms;
+}
+.search-form button:hover { opacity: 0.85; }
+
+
+/* 홈 컨텐츠 영역 */
+.page-content {
+    background: var(--home-bg);
+    padding: var(--sp-2xl) var(--sp-lg) var(--sp-4xl);
+}
+.page-content-inner {
+    max-width: 480px;
+    margin: 0 auto;
+}
+.section-title {
+    font-size:var(--fs-base);
+    font-weight: 700;
+    margin: var(--sp-2xl) var(--sp-lg);
+}
+
+/* 내 위치 날씨 */
+.my-location-btn {
+    width: 100%;
+    border: 1px dashed rgba(38, 49, 60, 0.3);
+    background-color: transparent;
+    border-radius: var(--radius-md);
+    padding: var(--sp-lg);
+    font-size: var(--fs-md);
+    color: var(--color-ink-sub);
+    cursor: pointer;
+    transition: background color 200ms;
+}
+.my-location-btn:hover {
+    background-color: rgba(255, 255, 255, 0.7);
+    color: var(--color-ink);
+}
+.my-location-hint {
+    margin-top: var(--sp-sm);
+    text-align: center;
+    font-size: var(--fs-xs);
+    color: var(--color-ink-sub);
+}
+.my-location-msg {
+    text-align: center;
+    font-size: var(--fs-sm);
+    color: var(--color-ink-sub);
+    padding: var(--sp-md);
+}
+
+/* 전국 최고/최저 기온 */
+.extream-row {
+    display: flex;
+    gap: var(--sp-md);
+}
+.extream-card {
+    flex: 1;
+    background-color: var(--color-white);
+    border: none;
+    border-radius: var(--radius-md);
+    padding: var(--sp-lg);
+    box-shadow: 0 4px 14px rgba(38, 49, 60, 0.08);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform box-shadow 150ms;
+}
+.extream-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(38, 49, 60, 0.12);
+}
+
+.extream-label { 
+    display: block;
+    font-size: var(--fs-xs);
+    color: var(--color-ink-sub);
+}
+.extream-value { 
+    display: block;
+    margin-top: var(--sp-sm);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+}
+
+/* 주요 도시 리스트 */
+.city-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-md);
+}
+
+.city-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background-color: var(--color-white);
+    border: none;
+    border-radius: var(--radius-md);
+    padding: var(--sp-lg) var(--sp-xl);
+    box-shadow: 0 4px 14px rgba(38, 49, 60, 0.08);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:transform box-shadow 150ms;
+}
+.city-row:hover {
+    transform: translateY(-1px);
+    box-shadow: rgba(38, 49, 60, 0.12);
+}
+.city-row-name {
+    font-size: var(--fs-base);
+    font-weight: 700;
+}
+.city-row-weather {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-sm);
+}
+.city-row-icon {
+    width: 36px;
+    height: 36px;
+}
+.city-row-temp {
+    font-size: var(--fs-lg);
+    font-weight: 800;
+    min-width: 40px;
+    text-align: right;
+}
+.city-row-chevron {
+    font-size: var(--fs-lg);
+    line-height: 1;
+    color: var(--color-ink-sub);
+}
+
+/* 모바일 환경에서의 터치 반응 */
+.extream-card:active,
+.city-row:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(38, 49, 60, 0.1);
+}
+
+.footer-home {
+    margin-top: var(--sp-xl);
+    text-align: center;
+    font-size: var(--fs-xs);
+    color: var(--color-ink-sub);
+    line-height: 1.6;
+}
+.footer-home a {
+    color: var(--color-ink);
+}
+
+/* ---------------------------------------------------------- */
+/* hidden 속성 강제 적용 */
+/*  - .tab-bar, .tab-pannel 에 display:flex; 를 지정했기 때문에 */
+/*    hidden 속성이 우선 순위에 밀려 숨겨지지 않는다. */
+/* ---------------------------------------------------------- */
+.sreen[hidden] { display: none; }
+
+/* ------------------------------------------------------ */
+/* 디테일 화면 */
+/* ------------------------------------------------------ */
+.screen-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-lg);
+    padding: var(--sp-xl) var(--sp-lg) var(--sp-4xl);
+}
+
+/* 앱 레퍼 */
+.app {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-xl);
+}
+
+/* 뒤로가기 */
+.detail-header {
+    width: 100%;
+    max-width: 480px;
+}
+
+.back-btn {
+    border: none;
+    background-color: rgba(255, 255, 255, 0.25);
+    color: var(--color-white);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: var(--fs-md);
+    padding: var(--sp-md) var(--sp-xl);
+    min-height: 44px;
+    border-radius: 1000px;
+    cursor: pointer;
+
+    transition: background 200ms;
+}
+
+.back-btn:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* 로딩/에러 관련 메세지 */
+.status-msg {
+    background-color: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-4xl) var(--sp-2xl);
+    text-align: center;
+    color: var(--color-ink-sub);
+    font-size: var(--fs-base);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+/* 탭 바: 주간별 날씨 / 시간별 날씨 */
+.tab-bar {
+    display: flex;    
+    gap: var(--sp-xs);
+    background-color: rgba(255, 255, 255, 0.25);
+    border-radius: 1000px;
+    padding: var(--sp-xs);
+    margin-bottom: var(--sp-lg);
+}
+.tab-btn {
+    flex: 1;
+    border: none;
+    background-color: transparent;
+    color: var(--color-white);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: var(--fs-md);
+    padding: var(--sp-md) 0;
+    min-height: 44px;
+    border-radius: 1000px;
+    cursor: pointer;
+    transition: background color 2000ms;
+}
+.tab-btn:hover{
+    background-color: var(--color-white);
+    color: var(--color-ink);
+}
+.tab-btn.active {
+    background-color: var(--color-white);
+    color: var(--color-ink);
+}
+
+/* 탭 패널 */
+.tab-pannel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-xl);
+}
+
+/* ---------------------------------------------------------- */
+/* hidden 속성 강제 적용 */
+/*  - .tab-bar, .tab-pannel 에 display:flex; 를 지정했기 때문에 */
+/*    hidden 속성이 우선 순위에 밀려 숨겨지지 않는다. */
+/* ---------------------------------------------------------- */
+.tab-bar[hidden],
+.tab-pannel[hidden] { display: none; }
+
+/* 현재 날씨 카드 */
+.current-card {
+    background-color: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-3xl) var(--sp-2xl);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+.current-content {
+    width: 100%;
+    text-align: center;
+}
+
+.location {
+    font-size: var(--fs-lg);
+    font-weight: 700;
+}
+.updated {
+    margin-top: var(--sp-xs);
+    font-size: var(--fs-xs);
+    color: var(--color-ink-sub);
+}
+
+.temp-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-md);
+    margin-top: var(--sp-md);
+}
+
+.weather-icon {
+    width: 76px;
+    height: 76px;
+}
+.temp {
+    font-size: var(--fs-temp);
+    font-weight: 900;
+    line-height: 1;
+}
+.desc {
+    margin-top: var(--sp-xs);
+    font-size: var(--fs-base);
+    color: var(--color-ink-sub);
+}
+
+.sub-info {
+    margin-top: var(--sp-2xl);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    border-top: 1px solid rgba(38, 49, 60, 0.15);
+    padding-top: var(--sp-lg);
+    /* 수직 간격 */
+    row-gap: var(--sp-lg);
+}
+
+.sub-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-xs);
+    font-size: var(--fs-base);
+    font-weight: 500;
+}
+
+.sub-label {
+    font-size: var(--fs-xs);
+    font-weight: 400;
+    color: var(--color-ink-sub);
+}
+
+.sun-info {
+    margin-top: var(--sp-lg);
+    display: flex;
+    justify-content: center;
+    gap: var(--sp-2xl);
+    font-size: var(--fs-sm);
+    color: var(--color-ink-sub);
+}
+
+.air-info {
+    margin-top: var(--sp-md);
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--sp-sm);
+}
+
+.air-badge {
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    padding: var(--sp-xs) var(--sp-md);
+    background-color: rgba(38, 49, 60, 0.08);
+    border-radius: 1000px;
+    color: var(--color-ink-sub);
+}
+
+.air-badge.grade-good       { background: rgba(46, 160, 90, 0.15); color: #2e8b50; }
+.air-badge.grade-normal     { background: rgba(64, 120, 200, 0.15); color: #3a6fc0; }
+.air-badge.grade-bad        { background: rgba(230, 150, 40, 0.15); color: #c07a10; }
+.air-badge.grade-verybad    { background: rgba(210, 60, 60, 0.15); color: #c03030; }
+
+/* 주간 날씨 카드 5일치 */
+.forecast-row {
+    display: flex;
+    gap: var(--sp-sm);
+    padding-bottom: var(--sp-xs);
+
+    /* 영역이 부족하면 스크롤 생성 */
+    overflow: auto;
+    /* 스크롤 바를 놓을 때 카드 경계에 맞춰 자연스럽게 정렬 */
+    scroll-snap-type: x proximity;
+}
+
+.forecast-card {
+    flex: 1 0 0;
+    min-width: 72px;
+    background-color: var(--card-bg);
+    border-radius: var(--radius-md);
+    padding: var(--sp-lg) var(--sp-sm);
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    scroll-snap-align: start;
+    line-height: 1.6;
+}
+
+@media screen and (max-width:480px) {
+    .forecast-card {
+        flex: 1 0 25%;
+    }
+}
+
+.forecast-label {
+    font-size: var(--fs-md);
+    font-weight: 700;
+    color: var(--color-ink-sub);
+}
+.forecast-icon {
+    display: block;
+    width: 44px;
+    height: 44px;
+    margin: var(--sp-sm) auto;
+}
+.forecast-max { font-size: var(--fs-lg); font-weight: 700; }
+.forecast-min { font-size: var(--fs-sm); font-weight: 400; color: var(--color-ink-sub); }
+.forecast-precip { margin-top: var(--sp-xs); font-size: var(--fs-sm); color: var(--color-accent);}
+
+/* 시간별 날씨 리스트 */
+.hourly-list-card {
+    background-color: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-sm) var(--sp-xl);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+.hour-row:not(:last-child) {
+    border-bottom: 1px solid rgba(38, 49, 60, 0.1);
+}
+
+.hour-row-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-sm);
+    background: transparent;
+    border: none;
+    padding: var(--sp-lg) 0;
+    font-family: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.hour-main {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-md);
+}
+
+.hour-time-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 64px;
+}
+.hour-time { 
+    font-size: var(--fs-md);
+    font-weight: 700;
+}
+.hour-desc { 
+    font-size: var(--fs-sm);
+    color: var(--color-ink-sub);
+}
+.hour-icon {
+    width: 36px;
+    height: 36px;
+}
+.hour-temp {
+    font-size: var(--fs-lg);
+    font-weight: 800;
+    min-width: 36px;
+}
+.hour-side {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-sm);
+}
+
+.hour-realfeel,
+.hour-precip {
+    font-size: var(--fs-sm);
+    color: var(--color-ink-sub);
+    white-space: nowrap;
+}
+
+.hour-chevron {
+    font-size: var(--fs-base);
+    color: var(--color-ink-sub);
+    display: inline-block;
+    transition: transform 200ms;
+}
+
+.hour-row.open .hour-chevron { 
+    transform: rotate(180deg);
+}
+
+/* 푸터 */
+.footer-detail {
+    text-align: center;
+    font-size: var(--fs-xs);
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    line-height: 1.6;
+}
+.footer-detail a {
+    color: var(--color-white);
+}

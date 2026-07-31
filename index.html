@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일기예보</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+
+    <!-- Eric Meyer CSS Reset -->
+    <link rel="stylesheet" href="./css/reset.css">
+
+    <!-- 사용자 정의 스타일 -->
+    <link rel="stylesheet" href="./css/style.css">
+
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="./js/script.js"></script>
+</head>
+<!-- API 를 통해 날씨 데이터를 저장하여 날씨에 따른 배경을 설정 -->
+
+<body data-weather="sunny">
+    <!-- id 속성의 식별자 작성 명명  -->
+    <!--  - kebab : CSS 에서 사용할 요소 -->
+    <!--  - camel : JS 에서 사용할 요소 -->
+
+    <!-- 공통 헤더 -->
+    <section class="hero-photo">
+        <div class="hero-inner">
+            <h1 class="hero-title">일기 예보 페이지</h1>
+            <form action="" id="searchForm" class="search-form">
+                <input type="text" id="cityInput" placeholder="도시 이름 검색(예시: 광주)" autocomplete="off">
+                <button type="submit">검색</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- 홈 화면: 주요 도시 리스트 + 세계 리스트 -->
+    <div id="screen-home" class="screen" hidden>
+        <div class="page-content">
+            <div class="page-content-inner">
+                <div class="home-top">
+                    <!-- 내 위치 날씨 -->
+                    <section id="myLocation" class="my-location">
+                        <button type="button" id="myLocationBtn" class="my-location-btn">
+                            📍내 위치 날씨 보기
+                        </button>
+                        <p class="my-location-hint">
+                            위치를 허용하면내 동내의 현재 날씨가 여기에 표시돼요.
+                        </p>
+                    </section>
+
+                    <!-- 전국 최고/최저 기온 -->
+                    <div class="home-top-right">
+                        <h2 class="section-title">오늘의 전국 최고/최저</h2>
+                        <div id="extremRow" class="extream-row">
+                            <button type="button" class="extream-card">
+                                <span class="extream-label">🔥 오늘 가장 더운 곳</span>
+                                <span class="extream-value">강릉 39°</span>
+                            </button>
+                            <button type="button" class="extream-card">
+                                <span class="extream-label">❄️ 오늘 가장 추운 곳</span>
+                                <span class="extream-value">대전 23°</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 주요 도시 날씨 -->
+                <h2 class="section-title">주요 도시 날씨</h2>
+
+                <!-- 임시 데이터 3개로 마크업 및 스타일 -->
+                <div id="cityList" class="city-list">
+                    <!-- 첫 번째 도시 -->
+                    <button type="button" class="city-row">
+                        <span class="city-row-name">서울</span>
+                        <span class="city-row-weather">
+                            <img src="./icons/rain.svg" alt="" class="city-row-icon">
+                            <span class="city-row-temp">28°</span>
+                            <span class="city-row-chevron">›</span>
+                        </span>
+                    </button>
+
+                    <!-- 두 번째 도시 -->
+                    <button type="button" class="city-row">
+                        <span class="city-row-name">서울</span>
+                        <span class="city-row-weather">
+                            <img src="./icons/rain.svg" alt="" class="city-row-icon">
+                            <span class="city-row-temp">28°</span>
+                            <span class="city-row-chevron">›</span>
+                        </span>
+                    </button>
+
+                    <!-- 세 번째 도시 -->
+                    <button type="button" class="city-row">
+                        <span class="city-row-name">서울</span>
+                        <span class="city-row-weather">
+                            <img src="./icons/rain.svg" alt="" class="city-row-icon">
+                            <span class="city-row-temp">28°</span>
+                            <span class="city-row-chevron">›</span>
+                        </span>
+                    </button>
+                </div>
+
+                <div class="footer-home">
+                    <p>Data by <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a></p>
+                    <p>미래유망 강사 김기호</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 디테일 화면: 주간 날씨 + 시간별 날씨 -->
+    <div id="screen-detail" class="screen screen-detail">
+        <header class="detail-header">
+            <button type="button" id="backBtn" class="back-btn">← 목록으로</button>
+        </header>
+
+        <div class="app">
+            <main>
+                <!-- 로딩/에러 관련 메세지 -->
+                <!-- role="status": 내용이 바뀌면 스크린리더가 자동으로 읽어줌 -->
+                <p id="statusMsg" class="status-msg" role="status" hidden>
+                    날씨 정보를 불러는 중...
+                </p>
+
+                <!-- 탭 바: 주간 날씨 / 시간별 날씨 -->
+                <div id="tabBar" class="tab-bar" role="tablist">
+                    <button type="button" class="tab-btn active" data-tab="summary" role="tab" aria-selected="true">주간별 날씨</button>
+                    <button type="button" class="tab-btn" data-tab="hourly" role="tab" aria-selected="false">시간별 날씨</button>
+                </div>
+
+                <!-- 탭 1: 주간 날씨(현재 날씨 카드 기본 골격) -->
+                <div id="panel-summary" class="tab-pannel" role="tabpanel">
+                    <section id="currentCard" class="current-card">
+                        <div id="currentContent" class="current-content">
+                            <h2 id="locationName" class="location">도시 이름</h2>
+                            <p id="updatedTime" class="updated">-</p>
+
+                            <!-- 날씨 정보 -->
+                            <div class="temp-row">
+                                <img src="./icons/clear-day.svg" alt="" class="weatherIcon weather-icon">
+                                <span id="temperature" class="temp">--°</span>
+                            </div>
+                            <p id="weatherDesc" class="desc">-</p>
+
+                            <!-- 하위 정보(체감, 습도, 풍속, 강수확률) -->
+                            <div class="sub-info">
+                                <div class="sub-item">
+                                    <span class="sub-label">체감</span>
+                                    <span id="feelsLike">--°</span>
+                                </div>
+                                <div class="sub-item">
+                                    <span class="sub-label">습도</span>
+                                    <span id="humidity">--%</span>
+                                </div>
+                                <div class="sub-item">
+                                    <span class="sub-label">풍속</span>
+                                    <span id="windSpeed">--km/h</span>
+                                </div>
+                                <div class="sub-item">
+                                    <span class="sub-label">강수확률</span>
+                                    <span id="precipProb">--%</span>
+                                </div>
+                            </div>
+
+                            <!-- 일출/일몰 정보 -->
+                            <div id="sunInfo" class="sun-info">
+                                <span>🌅일출 <span class="sunriseTime">05:26</span></span>
+                                <span>🌇일몰 <span class="sunsetTime">19:35</span></span>
+                            </div>
+
+                            <!-- 미세먼지/초미세먼지 정보 -->
+                            <div id="airInfo" class="air-info">
+                                <div id="pm10Badge" class="air-badge grade-good">미세먼지 좋음</div>
+                                <div id="pm25Badge" class="air-badge grade-bad">초미세먼지 나쁨</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 주간 날씨 정보(JS 추가 예정) -->
+                    <section id="forecastRow" class="forecast-row">
+                        <div class="forecast-card">
+                            <p class="forecast-label">오늘</p>
+                            <img src="./icons/cloudy.svg" alt="" class="forecast-icon">
+                            <p class="forecast-max">31°</p>
+                            <p class="forecast-min">24°</p>
+                            <p class="forecast-precip">☔20%</p>
+                        </div>
+                        <div class="forecast-card">
+                            <p class="forecast-label">내일</p>
+                            <img src="./icons/cloudy.svg" alt="" class="forecast-icon">
+                            <p class="forecast-max">31°</p>
+                            <p class="forecast-min">24°</p>
+                            <p class="forecast-precip">☔20%</p>
+                        </div>
+                        <div class="forecast-card">
+                            <p class="forecast-label">일</p>
+                            <img src="./icons/cloudy.svg" alt="" class="forecast-icon">
+                            <p class="forecast-max">31°</p>
+                            <p class="forecast-min">24°</p>
+                            <p class="forecast-precip">☔20%</p>
+                        </div>
+                        <div class="forecast-card">
+                            <p class="forecast-label">월</p>
+                            <img src="./icons/cloudy.svg" alt="" class="forecast-icon">
+                            <p class="forecast-max">31°</p>
+                            <p class="forecast-min">24°</p>
+                            <p class="forecast-precip">☔20%</p>
+                        </div>
+                        <div class="forecast-card">
+                            <p class="forecast-label">화</p>
+                            <img src="./icons/cloudy.svg" alt="" class="forecast-icon">
+                            <p class="forecast-max">31°</p>
+                            <p class="forecast-min">24°</p>
+                            <p class="forecast-precip">☔20%</p>
+                        </div>
+
+                    </section>
+
+                </div>
+
+                <!-- 탭 2: 시간별 날씨 -->
+                <!--  - 임시 데이터 2개 -->
+                <div id="panel-hourly" class="tab-pannel" role="tabpanel" hidden>
+                    <section class="hourly-list-card">
+                        <div id="hourlyList" class="hourly-list">
+                            <!-- 첫 번째 시간대 정보 -->
+                            <div class="hour-row">
+                                <button type="button" class="hour-row-head" aria-expanded="false">
+                                    <span class="hour-main">
+                                        <span class="hour-time-col">
+                                            <span class="hour-time">오후 1시</span>
+                                            <span class="hour-desc">맑음</span>
+                                        </span>
+                                        <img src="icons/clear-day.svg" alt="" class="hour-icon">
+                                        <span class="hour-temp">30°</span>
+                                        <span class="hour-realfeel">체감 35°</span>
+                                        <span class="hour-precip">☔ 0%</span>
+                                    </span>
+
+                                    <span class="hour-side">
+                                        <span class="hour-chevron">▼</span>
+                                    </span>
+                                </button>
+                            </div>
+                            
+                            <!-- 두 번째 시간대 정보 -->
+                            <div class="hour-row">
+                                <button type="button" class="hour-row-head" aria-expanded="false">
+                                    <span class="hour-main">
+                                        <span class="hour-time-col">
+                                            <span class="hour-time">오후 2시</span>
+                                            <span class="hour-desc">구름 조금</span>
+                                        </span>
+                                        <img src="icons/cloudy.svg" alt="" class="hour-icon">
+                                        <span class="hour-temp">30°</span>
+                                        <span class="hour-realfeel">체감 35°</span>
+                                        <span class="hour-precip">☔ 10%</span>
+                                    </span>
+
+                                    <span class="hour-side">
+                                        <span class="hour-chevron">▼</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+
+            <div class="footer-detail">
+                <p>Data by <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a></p>
+                <p>미래유망 강사 김기호</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
