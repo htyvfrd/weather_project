@@ -625,6 +625,25 @@ body {
 .hour-row.open .hour-chevron { 
     transform: rotate(180deg);
 }
+.hour-detail{
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-sm) var(--sp-lg);
+    padding: 0 var(--sp-xs) var(--sp-lg);
+    font-size: var(--fs-md);
+}
+
+.hour-detail-item{
+    flex: 0 0 calc((100% - var(--sp-lg) * 2)/3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-xs);
+    color: var(--color-ink-sub);
+}
+.hour-detail-item span { 
+    font-size: 0.9em;
+}
+.hour-detail-item strong { color: var(--color-ink); font-weight: 600;}
 
 /* 푸터 */
 .footer-detail {
