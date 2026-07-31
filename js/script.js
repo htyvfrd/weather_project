@@ -27,24 +27,29 @@ $(function () {
     // API 에서 전달된 값 중 일부가 null 로 전달되기 대문에
     // null 이거나 값이 없으면 '-' 으로 표시
     function safeRound(value, suffix) {
-        if(value === null || value === undefined) return '-';
+        if (value === null || value === undefined) return '-';
         return Math.round(value) + (suffix || "");
     }
 
     // 2026-07-30T15:05 → "15:05"
+    function formatClock(isoTime) {
+        return isoTime.split("T")[1];
+    }
+
+    // 2026-07-30T15:05 → "오후 3시"
     function formatHourLabel(isoTime) {
         let time = isoTime.split("T")[1];
         const hour = parseInt(time.split(":")[0]);
         const period = hour < 12 ? "오전" : "오후";
 
         let h12 = hour % 12;
-        if(h12 == 0 )h12= 12;
-        return period + " "+ h12 + "시";
+        if (h12 == 0) h12 = 12;
+        return period + " " + h12 + "시";
     }
 
     // 풍량
-    function degToCompass(deg) { 
-        if(deg === null || deg === undefined) return '';
+    function degToCompass(deg) {
+        if (deg === null || deg === undefined) return '';
 
         const dirs = [
             "북", "북북동", "북동", "동북동", "동", "동남동", "남동", "남남동",
@@ -56,11 +61,29 @@ $(function () {
 
     // 자외선지수 → 한글 표기
     function uvLabel(uv) {
-        if(uv < 3) return "낮음";
-        if(uv < 6) return "보통";
-        if(uv < 8) return "높음";
-        if(uv < 11) return "매우 높음";
+        if (uv < 3) return "낮음";
+        if (uv < 6) return "보통";
+        if (uv < 8) return "높음";
+        if (uv < 11) return "매우 높음";
         return "위험";
+    }
+    // ----------------------------------------
+    // 화면 전환: 홈 ↔ 상세
+    // ----------------------------------------
+   function showScreen(name) {
+        $("#screen-home").prop("hidden", name !== "home");
+        $("#screen-detail").prop("hidden", name !== "detail");
+
+        // 홈인 경우 홈 테마를 기본 테마로 지정
+        if(name === "home") {
+            $("body").attr("data-weather", "sunny");
+        }
+    }
+
+    // 상세 화면으로 전환
+    function openDetail(lat, lon, name) {
+        showScreen("detail");
+        loadWeather(lat, lon, name);
     }
 
     // ----------------------------------------
@@ -92,17 +115,19 @@ $(function () {
             hourly: 'temperature_2m,apparent_temperature,weather_code,precipitation_probability,relative_humidity_2m,wind_speed_10m,wind_direction_10m,uv_index,dew_point_2m,cloud_cover,visibility',
             daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset",
             forecast_days: 5,
-            timezone:"auto"
+            timezone: "auto"
         })
-        .done(function(data) { 
-            // 정상적으로 불러온 경우
-            renderWeather(data, displayName);
-            showResult();
-        })
-        .fail(function() { 
-            // 불어오기가 실패한 경우
-            showError("날씨 정보를 가져오지 못했습니다. 잠시후 다시 시도해주세요.");
-        })
+            .done(function (data) {
+                // 정상적으로 불러온 경우
+
+                renderWeather(data, displayName);
+                renderHourly(data)
+                showResult();
+            })
+            .fail(function () {
+                // 불어오기가 실패한 경우
+                showError("날씨 정보를 가져오지 못했습니다. 잠시후 다시 시도해주세요.");
+            })
     }
 
     // ----------------------------------------
@@ -112,13 +137,13 @@ $(function () {
         // 현재 날씨
         const cur = data.current;
         const info = getWeatherInfo(cur.weather_code);
-        
+
         $("body").attr("data-weather", info.theme);
-       
+
         $('#locationName').text(displayName);
         // 2026-07-30T15:05 → "2026-07-30 15:05기준"
         $('#updatedTime').text(cur.time.replace('T', ' ') + ' 기준');
-        
+
         $('#weatherIcon').attr('src', info.icon);
         $('#temperature').text(Math.round(cur.temperature_2m) + '°');
         $('#weatherDesc').text(info.label);
@@ -129,14 +154,14 @@ $(function () {
         $('#sunriseTime').text(formatClock(data.daily.sunrise[0]));
         $('#sunsetTime').text(formatClock(data.daily.sunset[0]));
 
-        const WEEKDAY = ["일","월","화","수","목","금","토"]
-        
+        const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"]
+
         let cards = "";
-        for(let i = 0; i < data.daily.time.length; i++) {
+        for (let i = 0; i < data.daily.time.length; i++) {
             const dayInfo = getWeatherInfo(data.daily.weather_code[i]);
             let label = "";
-            if(i === 0) label = "오늘";
-            else if(i === 1) label = "내일";
+            if (i === 0) label = "오늘";
+            else if (i === 1) label = "내일";
             else label = WEEKDAY[new Date(data.daily.time[i]).getDay()];
             cards +=
                 `<div class="forecast-card">
@@ -149,51 +174,65 @@ $(function () {
         }
         $("#forecastRow").html(cards);
     }
-    
+
     function renderHourly(data) {
-        const hurly = data.houtly;
+        const hourly = data.hourly;
         const HOURS_TO_SHOW = 12;
 
         let startIndex = 0;
-        for(let h = 0; h < renderHourly.time.length; h++) {
-            if(renderHourly.time[h] >= data.current.time) {
+        for (let h = 0; h < hourly.time.length; h++) {
+            if (hourly.time[h] >= data.current.time) {
                 startIndex = h;
                 break
             }
         }
 
-        let rows ="";
+        let rows = "";
+        for (let n = 0; n < HOURS_TO_SHOW; n++) {
+            const idx = startIndex + n;
+            if (idx >= hourly.time.length) break;
 
-        rows += 
-            `<div class="hour-row">
-                <button type="button" class="hour-row-head" aria-expanded="false">
-                    <span class="hour-main">
-                        <span class="hour-time-col">
-                            <span class="hour-time">오후 1시</span>
-                            <span class="hour-desc">맑음</span>
+            // idx 시간대의 날씨 정보
+            const info = getWeatherInfo(hourly.weather_code[idx]);
+
+            const uv = hourly.uv_index[idx];
+            const uvText = (uv === null || uv === undefined) ? "-" : uv.toFixed(1) + "(" + uvLabel(uv) + ")";
+            const vis = hourly.visibility[idx];
+            const visText = (vis === null || vis === undefined) ? "-" : (vis / 1000).toFixed(1) + "km";
+
+            rows +=
+                `<div class="hour-row ">
+                    <button type="button" class="hour-row-head" aria-expanded="false">
+                        <span class="hour-main">
+                            <span class="hour-time-col">
+                                <span class="hour-time">${formatHourLabel(hourly.time[idx])}</span>
+                                <span class="hour-desc">${info.label}</span>
+                            </span>
+                            <img src="${info.icon}" alt="" class="hour-icon">
+                            <span class="hour-temp">${safeRound(hourly.temperature_2m[idx])}°</span>
+                            <span class="hour-realfeel">체감 ${safeRound(hourly.apparent_temperature[idx])}°</span>
+                            <span class="hour-precip">☔ ${safeRound(hourly.precipitation_probability[idx])}%</span>
                         </span>
-                        <img src="icons/clear-day.svg" alt="" class="hour-icon">
-                        <span class="hour-temp">30°</span>
-                        <span class="hour-realfeel">체감 35°</span>
-                        <span class="hour-precip">☔ 0%</span>
-                    </span>
-                    <span class="hour-side">
-                        <span class="hour-chevron">▼</span>
-                    </span>
-                </button>
-                <div class="hour-detail">
-                    <div class="hour-detail-item"><span>바람</span><strong>서북서 7km/h</strong></div>
-                    <div class="hour-detail-item"><span>습도</span><strong>36%</strong></div>
-                    <div class="hour-detail-item"><span>자외선 지수</span><strong>7.9(높음)</strong></div>
-                    <div class="hour-detail-item"><span>이슬점</span><strong>22</strong></div>
-                    <div class="hour-detail-item"><span>구름량</span><strong>26%</strong></div>
-                    <div class="hour-detail-item"><span>가시거리</span><strong>31.7km</strong></div>
-                </div>
-            </div>`;
-        
-        $("#hourlyList").html(rows).find(".hour-detail").hide();
-    }
+                        <span class="hour-side">
+                            <span class="hour-chevron">▼</span>
+                        </span>
+                    </button>
+                    
+                    <!-- 상세 날씨 정보 -->
+                    <div class="hour-detail">
+                        <div class="hour-detail-item"><span>바람</span><strong>${degToCompass(hourly.wind_direction_10m[idx])} ${safeRound(hourly.wind_speed_10m[idx])}km</strong></div>
+                        <div class="hour-detail-item"><span>습도</span><strong>${safeRound(hourly.relative_humidity_2m[idx])}%</strong></div>
+                        <div class="hour-detail-item"><span>자외선지수</span><strong>${uvText}</strong></div>
+                        <div class="hour-detail-item"><span>이슬점</span><strong>${safeRound(hourly.dew_point_2m[idx])}°</strong></div>
+                        <div class="hour-detail-item"><span>구름량</span><strong>${safeRound(hourly.cloud_cover[idx])}%</strong></div>
+                        <div class="hour-detail-item"><span>가시거리</span><strong>${visText}</strong></div>
+                    </div>
+                </div>`
+        }   // for(let n...)
 
+        $("#hourlyList").html(rows).find(".hour-detail").hide();
+        // .find(".hourly-row").hide();
+    }
     // ----------------------------------------
     // 데이터 로딩 완료
     //  - 상태 메세지 숨기기
@@ -208,7 +247,7 @@ $(function () {
         $("#panel-hourly").prop("hidden", activeTab !== "hourly");
     }
 
-
+    //| 광주 | 35.1595 | 126.8526 |
     //| 서울 | 37.5665 | 126.9780 |
     loadWeather(37.5665, 126.9780, "서울");
 
@@ -216,22 +255,34 @@ $(function () {
     // 이벤트 연결
     // ----------------------------------------
     // 검색 기능
-    $("#searchForm").on("submit", function(e) {
+    $("#searchForm").on("submit", function (e) {
         e.preventDefault();
+    });
+   // 뒤로가기: 상세 화면 → 홈 전환
+    $("#backBtn").on("click", function() {
+        showScreen("home");
+        // 도시별 날씨 리스트 표시
+
     });
 
     // 탭 전환(주간 날씨(summary) ↔ 시간별 날씨(hourly))
-    $("#tabBar").on("click", ".tab-btn", function() {
-        
+    $("#tabBar").on("click", ".tab-btn", function () {
+
         $(".tab-btn").removeClass("active").attr("aria-selected", "false");
         $(this).addClass("active").attr("aria-selected", "true");
-        
+
         // summary 또는 hourly 를 반환
         const tab = $(this).data("tab");
         $("#panel-summary").prop("hidden", tab !== "summary");
         $("#panel-hourly").prop("hidden", tab !== "hourly");
     });
-    
-    
 
+    $("#hourlyList").on("click",".hour-row-head", function() {
+        const row = $(this).closest(".hour-row");
+        row.toggleClass("open");
+        $(this).attr("aria-expanded",row.hasClass("open") ? "true":"false")
+        row.find(".hour-detail").slideToggle(150);
+    })
+        // 첫 화면 홈으로 표시
+    showScreen("home");
 });

@@ -44,7 +44,7 @@
     </section>
 
     <!-- 홈 화면: 주요 도시 리스트 + 세계 리스트 -->
-    <div id="screen-home" class="screen" hidden>
+    <div id="screen-home" class="screen">
         <div class="page-content">
             <div class="page-content-inner">
                 <div class="home-top">
@@ -195,59 +195,9 @@
                 <!--  - 임시 데이터 2개 -->
                 <div id="panel-hourly" class="tab-pannel" role="tabpanel" hidden>
                     <section class="hourly-list-card">
-                        <div id="hourlyList" class="hourly-list">
-                            <!-- 첫 번째 시간대 정보 -->
-                            <div class="hour-row open">
-                                <button type="button" class="hour-row-head" aria-expanded="true">
-                                    <span class="hour-main">
-                                        <span class="hour-time-col">
-                                            <span class="hour-time">오후 1시</span>
-                                            <span class="hour-desc">맑음</span>
-                                        </span>
-                                        <img src="icons/clear-day.svg" alt="" class="hour-icon">
-                                        <span class="hour-temp">30°</span>
-                                        <span class="hour-realfeel">체감 35°</span>
-                                        <span class="hour-precip">☔ 0%</span>
-
-                                        
-                                    </span>
-
-                                    <span class="hour-side">
-                                        <span class="hour-chevron">▼</span>
-                                    </span>
-                                </button>
-                                <div class="hour-detail">
-                                    <div class="hour-detail-item"><span>바람</span><strong>서북서 7km/h</strong></div>
-                                    <div class="hour-detail-item"><span>습도</span><strong>36%</strong></div>
-                                    <div class="hour-detail-item"><span>자외선 지수</span><strong>7.9(높음)</strong></div>
-                                    <div class="hour-detail-item"><span>이슬점</span><strong>22</strong></div>
-                                    <div class="hour-detail-item"><span>구름량</span><strong>26%</strong></div>
-                                    <div class="hour-detail-item"><span>가시거리</span><strong>31.7km</strong></div>
-                                </div>
-                            </div>
-                            
-                            <!-- 두 번째 시간대 정보 -->
-                            <div class="hour-row">
-                                <button type="button" class="hour-row-head" aria-expanded="false">
-                                    <span class="hour-main">
-                                        <span class="hour-time-col">
-                                            <span class="hour-time">오후 2시</span>
-                                            <span class="hour-desc">구름 조금</span>
-                                        </span>
-                                        <img src="icons/cloudy.svg" alt="" class="hour-icon">
-                                        <span class="hour-temp">30°</span>
-                                        <span class="hour-realfeel">체감 35°</span>
-                                        <span class="hour-precip">☔ 10%</span>
-                                    </span>
-
-                                    <span class="hour-side">
-                                        <span class="hour-chevron">▼</span>
-                                    </span>
-                                </button>
-                            </div>
-
-                        </div>
-                    </section>
+                        <!-- 시간대 날씨 -->
+                        <div id="hourlyList" class="hourly-list"></div>
+                    </section> 
                 </div>
             </main>
 
