@@ -401,6 +401,7 @@ $(function () {
                     timezone:"auto"
                 })
                 .done(function(res) { 
+                    loadMyAirQuality(lat, lon);
                     renderMyLocation(res, lat, lon);
                 })
                 .fail(function() {  $("#myLocation").html("<p class='my-location-msg'>내 위치 날씨를 불러오지 못했습니다.</p>");});
@@ -454,16 +455,35 @@ $(function () {
                     </div>
 
                     <!-- 미세먼지/초미세먼지 정보 -->
-                    <div id="airInfo" class="air-info">
-                        <div class="air-badge grade-good">미세먼지 -</div>
-                        <div class="air-badge grade-bad">초미세먼지 -</div>
-                    </div>
+                    <div class="air-info">
+                        <div id="myPm10Badge" class="air-badge">미세먼지 -</div>
+                        <div id="myPm25Badge" class="air-badge">초미세먼지 -</div>
                 </div>
             </div>`
         );
 
     }
 
+        function loadMyAirQuality(lat, lon) {
+        $("#myPm10Badge").text("미세먼지 확인 중").removeClass().addClass("air-badge");
+        $("#myPm25Badge").text("초미세먼지 확인 중").removeClass().addClass("air-badge");
+        $.getJSON("https://air-quality-api.open-meteo.com/v1/air-quality", {
+            latitude:lat,
+            longitude:lon,
+            current:"pm10,pm2_5",
+            timezone:"auto"
+        })
+        .done(function(data) { 
+            const pm10Grade = pmGrade(data.current.pm10, PM10_THRESHOLDS);
+            const pm25Grade = pmGrade(data.current.pm2_5, PM25_THRESHOLDS);
+            $("#myPm10Badge").text("미세먼지 " + pm10Grade.label).addClass(pm10Grade.className);
+            $("#myPm25Badge").text("초미세먼지 " + pm25Grade.label).addClass(pm25Grade.className);
+        })
+        .fail(function() {
+            $("#myPm10Badge").text("미세먼지 정보 없음");
+            $("#myPm25Badge").text("초미세먼지 정보 없음");
+        });
+    }
         // 대기질 정보 탐색
     function loadAirQuality(lat, lon, seq) {
         $("#pm10Badge").text("미세먼지 확인 중").removeClass().addClass("air-badge");
