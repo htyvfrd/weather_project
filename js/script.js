@@ -168,13 +168,57 @@ $(function () {
             forecast_days: 1,
             timezone:"auto"
         })        
-        .done(function(results) { alert("주요 도시 날씨들을 불러습니다!"); })
+        .done(function(results) { 
+            let rows = "";
+            let hotIdx =0;
+            let coldIdx =0;
+            
+            for(let i= 0; i < results.length; i++){
+                const name = HOME_CITIES[i];
+                const City = FALLBACK_CITIES[name];
+                rows += CityRowHTML(
+                name,
+                    City.lat,
+                    City.lon,
+                    results[i].current.weather_code,
+                    results[i].current.temperature_2m
+                );
+
+                if(results[i].daily.temperature_2m_min[0]<results[coldIdx].daily.temperature_2m_min[0]) {
+                    coldIdx=i;
+                }
+                if(results[i].daily.temperature_2m_max[0]>results[hotIdx].daily.temperature_2m_max[0]) {
+                    hotIdx=i;
+                }
+            
+            }
+            $("#cityList").html(rows);
+
+            const hotName = HOME_CITIES[hotIdx];
+            const coldName = HOME_CITIES[coldIdx];
+            const hotCity = FALLBACK_CITIES[hotName];
+            const coldCity = FALLBACK_CITIES[coldName];
+            $("#hotCity").data({
+                name:hotName,
+                lat:hotCity.lat,
+                lon:hotCity.lon
+            });
+            $("#hotCity .extream-value")
+                .html(hotName + " " + safeRound(results[hotIdx].daily.temperature_2m_max[0])+"°");
+
+            $("#coldCity").data({
+                name:coldName,
+                lat:coldCity.lat,
+                lon:coldCity.lon
+            });
+            $("#coldCity .extream-value")
+                .html(coldName + " " + safeRound(results[coldIdx].daily.temperature_2m_min[0])+"°");            
+        })
+            
         .fail(function() { alert("주요 도시 날씨를 불러오지 못했습니다.")});
     }
-    loadCityList();
 
-
-
+    
     // ----------------------------------------
     // 받아온 데이터 화면에 표시
     // ----------------------------------------
@@ -278,14 +322,14 @@ $(function () {
         $("#hourlyList").html(rows).find(".hour-detail").hide();
         // .find(".hourly-row").hide();
     }
-    function cityRowHTML(name, lat, long, weatherCode, temp) {
+    function CityRowHTML(name, lat, lon, weatherCode, temp) {
         const info = getWeatherInfo(weatherCode);
 
-        return `<button type="button" class="city-row">
-                    <span class="city-row-name">서울</span>
+                return `<button type="button" class="city-row" data-name="${name}" data-lat="${lat}" data-lon="${lon}">
+                    <span class="city-row-name">${name}</span>
                     <span class="city-row-weather">
-                        <img src="./icons/rain.svg" alt="" class="city-row-icon">
-                        <span class="city-row-temp">28°</span>
+                        <img src="${info.icon}" alt="" class="city-row-icon">
+                        <span class="city-row-temp">${safeRound(temp)}°</span>
                         <span class="city-row-chevron">›</span>
                     </span>
                 </button>`
@@ -308,19 +352,64 @@ $(function () {
     //| 서울 | 37.5665 | 126.9780 |
     loadWeather(37.5665, 126.9780, "서울");
 
+    //-----------------------------------------
+    // 도시 이름 검색
+    //  - 폴백 목록에 있으면 목록에서 반환(빠른 검색)
+    //  - 없으면 Open-Meteo Geocoding API 로 검색
+    //-----------------------------------------
+    function searchCity(rawQuery) {
+        const query = $.trim(rawQuery); // 앞뒤 공백을 제거한 검색한 값
+        if(!query) return;
+
+        if(FALLBACK_CITIES[query]) {
+            const c = FALLBACK_CITIES[query];
+            $("#cityInput").val("");    // 입력 요소의 입력 값 지우기
+            openDetail(c.lat, c.lon, query);
+            return;
+        }
+
+        showScreen("detail");
+                showScreen('"$(query)"검색중');
+
+        $.get.JSON("https://geocoding-api.open-meteo.com/v1/search",{
+            name:query,
+            count:1,
+            language:"ko",
+            format:"json"
+        })
+        .done(function(res){console.log(res);
+            if(res.results &&res.results.length>0) {
+                const city = res.results[0];
+                $("#cityInput").val("");
+                openDetail(city.latitude, city.longitude, city.name);
+            }   
+            else{
+                showStatus('"${qiery}"의 검색 결과가 없습니다. 영문 도시 명으로 시도해보세요.');
+            }
+        })
+    .fail(function() { showStatus("검색에 실패를 하였습니다. 네트워크 상태를 확인해쭈세요.");});
+    }
     // ----------------------------------------
     // 이벤트 연결
     // ----------------------------------------
     // 검색 기능
     $("#searchForm").on("submit", function (e) {
         e.preventDefault();
+        searchCity($("#cityInput").val());
     });
+        // 도시 리스트 행/최고최저 기온 카드 → 상세 화면
+    $(".page-content").on("click", ".city-row, .extream-card", function() {
+        const btn = $(this);
+        openDetail(btn.data("lat"), btn.data("lon"), btn.data("name"));
+    });
+
    // 뒤로가기: 상세 화면 → 홈 전환
     $("#backBtn").on("click", function() {
         showScreen("home");
         // 도시별 날씨 리스트 표시
-
+        loadCityList();
     });
+
 
     // 탭 전환(주간 날씨(summary) ↔ 시간별 날씨(hourly))
     $("#tabBar").on("click", ".tab-btn", function () {
@@ -342,4 +431,5 @@ $(function () {
     })
         // 첫 화면 홈으로 표시
     showScreen("home");
+    loadCityList();
 });
