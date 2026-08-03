@@ -186,7 +186,15 @@ body {
     color: var(--color-ink-sub);
     padding: var(--sp-md);
 }
-
+.current-card.my-location-card{
+    cursor:pointer;
+    box-shadow: 0.4px rgba(red, green, blue, alpha);
+    transition: transform, box-shadow 200ms;
+}
+.current-card.my-location-card:hover{
+    transform:translatey(-1px);
+    box-shadow: 0.8px 20px rgba(red, green, blue, alpha);
+}
 /* 전국 최고/최저 기온 */
 .extream-row {
     display: flex;
@@ -274,7 +282,8 @@ body {
 
 /* 모바일 환경에서의 터치 반응 */
 .extream-card:active,
-.city-row:active {
+.city-row:active,
+.current-card.my-location-card:active {
     transform: scale(0.98);
     box-shadow: 0 2px 8px rgba(38, 49, 60, 0.1);
 }
